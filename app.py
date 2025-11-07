@@ -126,238 +126,238 @@ with tab_scan:
                         st.markdown("---")
                         
                         summary = results.get('compliance_summary', {})
-                    
-                    col1, col2, col3, col4 = st.columns(4)
-                    
-                    with col1:
-                        st.metric(
-                            "Overall Score",
-                            f"{summary.get('weighted_score', 0):.1f}/100",
-                            delta=summary.get('status', 'Unknown')
-                        )
-                    
-                    with col2:
-                        grade = summary.get('grade', 'N/A')
-                        grade_color = summary.get('color', 'gray')
-                        st.markdown(f"### Grade: <span style='color:{grade_color}; font-size:2em'>{grade}</span>", unsafe_allow_html=True)
-                    
-                    with col3:
-                        status = summary.get('status', 'Unknown')
-                        if status in ['Excellent', 'Good']:
-                            st.success(f"Status: {status}")
-                        elif status == 'Fair':
-                            st.warning(f"Status: {status}")
-                        else:
-                            st.error(f"Status: {status}")
-                    
-                    with col4:
-                        scan_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        csv_data = _generate_csv_export(results, scan_time)
-                        st.download_button(
-                            label="📥 Download CSV Report",
-                            data=csv_data,
-                            file_name=f"compliance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                            mime="text/csv"
-                        )
-                    
-                    category_scores = summary.get('category_scores', {})
-                    weights = summary.get('weights', {})
-                    
-                    st.markdown("### Category Breakdown")
-                    score_df = pd.DataFrame([
-                        {
-                            'Category': 'Cookie Consent Banner',
-                            'Score': f"{category_scores.get('cookie_consent', 0)}/100",
-                            'Weight': f"{weights.get('cookie_consent', 0)*100:.0f}%",
-                            'Weighted Score': f"{category_scores.get('cookie_consent', 0) * weights.get('cookie_consent', 0):.1f}"
-                        },
-                        {
-                            'Category': 'Privacy Policy',
-                            'Score': f"{category_scores.get('privacy_policy', 0)}/100",
-                            'Weight': f"{weights.get('privacy_policy', 0)*100:.0f}%",
-                            'Weighted Score': f"{category_scores.get('privacy_policy', 0) * weights.get('privacy_policy', 0):.1f}"
-                        },
-                        {
-                            'Category': 'Tracker Management',
-                            'Score': f"{category_scores.get('trackers', 0)}/100",
-                            'Weight': f"{weights.get('trackers', 0)*100:.0f}%",
-                            'Weighted Score': f"{category_scores.get('trackers', 0) * weights.get('trackers', 0):.1f}"
-                        },
-                        {
-                            'Category': 'Contact Information',
-                            'Score': f"{category_scores.get('contact_info', 0)}/100",
-                            'Weight': f"{weights.get('contact_info', 0)*100:.0f}%",
-                            'Weighted Score': f"{category_scores.get('contact_info', 0) * weights.get('contact_info', 0):.1f}"
-                        }
-                    ])
-                    st.dataframe(score_df, use_container_width=True, hide_index=True)
-                    
-                    st.markdown("---")
-                    
-                    tab1, tab2, tab3, tab4 = st.tabs(["📋 Overview", "🍪 Cookie Banner", "📡 Trackers", "📄 Privacy Policy"])
-                    
-                    with tab1:
-                        st.subheader("Compliance Overview")
                         
-                        cookie_banner = results.get('cookie_banner', {})
-                        tracking = results.get('tracking_scripts', {})
-                        privacy = results.get('privacy_policy', {})
-                        contact = results.get('contact_info', {})
+                        col1, col2, col3, col4 = st.columns(4)
                         
-                        overview_data = {
-                            'Check': [
-                                'Cookie Consent Banner',
-                                'Privacy Policy',
-                                'Contact Information',
-                                'Third-Party Trackers'
-                            ],
-                            'Status': [
-                                '✅ Detected' if cookie_banner.get('detected') else '❌ Not Found',
-                                '✅ Found' if privacy.get('found') else '❌ Not Found',
-                                '✅ Found' if contact.get('detected') else '❌ Not Found',
-                                f"⚠️ {tracking.get('total_trackers', 0)} Detected" if tracking.get('total_trackers', 0) > 0 else '✅ None Detected'
-                            ],
-                            'Details': [
-                                f"{cookie_banner.get('banner_elements', 0)} elements, {len(cookie_banner.get('keywords_found', []))} keywords",
-                                f"{privacy.get('count', 0)} link(s) found",
-                                'Email addresses detected' if contact.get('emails_found') else 'Contact info present',
-                                ', '.join(tracking.get('tracker_names', [])[:3]) if tracking.get('tracker_names') else 'No trackers'
-                            ]
-                        }
+                        with col1:
+                            st.metric(
+                                "Overall Score",
+                                f"{summary.get('weighted_score', 0):.1f}/100",
+                                delta=summary.get('status', 'Unknown')
+                            )
                         
-                        df = pd.DataFrame(overview_data)
-                        st.dataframe(df, use_container_width=True, hide_index=True)
+                        with col2:
+                            grade = summary.get('grade', 'N/A')
+                            grade_color = summary.get('color', 'gray')
+                            st.markdown(f"### Grade: <span style='color:{grade_color}; font-size:2em'>{grade}</span>", unsafe_allow_html=True)
                         
-                        if 'recommendations' in results and not results['recommendations'].get('error'):
-                            st.markdown("### 🎯 Recommendations")
-                            recs = results['recommendations']
-                            
-                            if recs.get('priority_actions'):
-                                st.markdown("**Priority Actions:**")
-                                for action in recs['priority_actions']:
-                                    st.markdown(f"- {action}")
-                            
-                            if recs.get('overall_assessment'):
-                                st.info(recs['overall_assessment'])
-                    
-                    with tab2:
-                        st.subheader("Cookie Consent Banner Analysis")
+                        with col3:
+                            status = summary.get('status', 'Unknown')
+                            if status in ['Excellent', 'Good']:
+                                st.success(f"Status: {status}")
+                            elif status == 'Fair':
+                                st.warning(f"Status: {status}")
+                            else:
+                                st.error(f"Status: {status}")
                         
-                        if cookie_banner.get('detected'):
-                            st.success("✅ Cookie consent banner detected")
-                            
-                            st.markdown("**Keywords Found:**")
-                            if cookie_banner.get('keywords_found'):
-                                for keyword in cookie_banner['keywords_found']:
-                                    st.markdown(f"- {keyword}")
-                            
-                            st.metric("Banner Elements Detected", cookie_banner.get('banner_elements', 0))
-                        else:
-                            st.error("❌ No cookie consent banner detected")
-                            st.warning("⚠️ GDPR/CCPA requires user consent before setting non-essential cookies. Consider implementing a cookie consent banner.")
-                    
-                    with tab3:
-                        st.subheader("Third-Party Tracking Scripts")
+                        with col4:
+                            scan_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            csv_data = _generate_csv_export(results, scan_time)
+                            st.download_button(
+                                label="📥 Download CSV Report",
+                                data=csv_data,
+                                file_name=f"compliance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                                mime="text/csv"
+                            )
                         
-                        total_trackers = tracking.get('total_trackers', 0)
+                        category_scores = summary.get('category_scores', {})
+                        weights = summary.get('weights', {})
                         
-                        if total_trackers > 0:
-                            st.warning(f"⚠️ {total_trackers} third-party tracker(s) detected")
-                            
-                            detected = tracking.get('detected_trackers', {})
-                            
-                            for tracker_name, scripts in detected.items():
-                                with st.expander(f"**{tracker_name}** ({len(scripts)} script(s))"):
-                                    for script in scripts[:3]:
-                                        st.code(script, language=None)
-                            
-                            st.info("💡 Ensure users are informed about these trackers in your privacy policy and cookie consent banner.")
-                        else:
-                            st.success("✅ No third-party trackers detected")
+                        st.markdown("### Category Breakdown")
+                        score_df = pd.DataFrame([
+                            {
+                                'Category': 'Cookie Consent Banner',
+                                'Score': f"{category_scores.get('cookie_consent', 0)}/100",
+                                'Weight': f"{weights.get('cookie_consent', 0)*100:.0f}%",
+                                'Weighted Score': f"{category_scores.get('cookie_consent', 0) * weights.get('cookie_consent', 0):.1f}"
+                            },
+                            {
+                                'Category': 'Privacy Policy',
+                                'Score': f"{category_scores.get('privacy_policy', 0)}/100",
+                                'Weight': f"{weights.get('privacy_policy', 0)*100:.0f}%",
+                                'Weighted Score': f"{category_scores.get('privacy_policy', 0) * weights.get('privacy_policy', 0):.1f}"
+                            },
+                            {
+                                'Category': 'Tracker Management',
+                                'Score': f"{category_scores.get('trackers', 0)}/100",
+                                'Weight': f"{weights.get('trackers', 0)*100:.0f}%",
+                                'Weighted Score': f"{category_scores.get('trackers', 0) * weights.get('trackers', 0):.1f}"
+                            },
+                            {
+                                'Category': 'Contact Information',
+                                'Score': f"{category_scores.get('contact_info', 0)}/100",
+                                'Weight': f"{weights.get('contact_info', 0)*100:.0f}%",
+                                'Weighted Score': f"{category_scores.get('contact_info', 0) * weights.get('contact_info', 0):.1f}"
+                            }
+                        ])
+                        st.dataframe(score_df, use_container_width=True, hide_index=True)
                         
-                        st.metric("Total Scripts on Page", tracking.get('total_scripts', 0))
-                    
-                    with tab4:
-                        st.subheader("Privacy Policy Analysis")
+                        st.markdown("---")
                         
-                        if privacy.get('found'):
-                            st.success(f"✅ {privacy.get('count', 0)} privacy policy link(s) found")
+                        tab1, tab2, tab3, tab4 = st.tabs(["📋 Overview", "🍪 Cookie Banner", "📡 Trackers", "📄 Privacy Policy"])
+                        
+                        with tab1:
+                            st.subheader("Compliance Overview")
                             
-                            st.markdown("**Privacy Policy Links:**")
-                            for link in privacy.get('links', []):
-                                st.markdown(f"- [{link['text']}]({link['url']})")
+                            cookie_banner = results.get('cookie_banner', {})
+                            tracking = results.get('tracking_scripts', {})
+                            privacy = results.get('privacy_policy', {})
+                            contact = results.get('contact_info', {})
                             
-                            if 'policy_analysis' in results and not results['policy_analysis'].get('error'):
-                                st.markdown("---")
-                                st.markdown("### 🤖 AI-Powered Policy Analysis")
+                            overview_data = {
+                                'Check': [
+                                    'Cookie Consent Banner',
+                                    'Privacy Policy',
+                                    'Contact Information',
+                                    'Third-Party Trackers'
+                                ],
+                                'Status': [
+                                    '✅ Detected' if cookie_banner.get('detected') else '❌ Not Found',
+                                    '✅ Found' if privacy.get('found') else '❌ Not Found',
+                                    '✅ Found' if contact.get('detected') else '❌ Not Found',
+                                    f"⚠️ {tracking.get('total_trackers', 0)} Detected" if tracking.get('total_trackers', 0) > 0 else '✅ None Detected'
+                                ],
+                                'Details': [
+                                    f"{cookie_banner.get('banner_elements', 0)} elements, {len(cookie_banner.get('keywords_found', []))} keywords",
+                                    f"{privacy.get('count', 0)} link(s) found",
+                                    'Email addresses detected' if contact.get('emails_found') else 'Contact info present',
+                                    ', '.join(tracking.get('tracker_names', [])[:3]) if tracking.get('tracker_names') else 'No trackers'
+                                ]
+                            }
+                            
+                            df = pd.DataFrame(overview_data)
+                            st.dataframe(df, use_container_width=True, hide_index=True)
+                            
+                            if 'recommendations' in results and not results['recommendations'].get('error'):
+                                st.markdown("### 🎯 Recommendations")
+                                recs = results['recommendations']
                                 
-                                analysis = results['policy_analysis']
+                                if recs.get('priority_actions'):
+                                    st.markdown("**Priority Actions:**")
+                                    for action in recs['priority_actions']:
+                                        st.markdown(f"- {action}")
                                 
-                                col1, col2, col3 = st.columns(3)
+                                if recs.get('overall_assessment'):
+                                    st.info(recs['overall_assessment'])
+                        
+                        with tab2:
+                            st.subheader("Cookie Consent Banner Analysis")
+                            
+                            if cookie_banner.get('detected'):
+                                st.success("✅ Cookie consent banner detected")
                                 
-                                with col1:
-                                    gdpr_status = "✅ Compliant" if analysis.get('gdpr_compliant') else "❌ Non-Compliant"
-                                    st.metric("GDPR", gdpr_status)
+                                st.markdown("**Keywords Found:**")
+                                if cookie_banner.get('keywords_found'):
+                                    for keyword in cookie_banner['keywords_found']:
+                                        st.markdown(f"- {keyword}")
                                 
-                                with col2:
-                                    ccpa_status = "✅ Compliant" if analysis.get('ccpa_compliant') else "❌ Non-Compliant"
-                                    st.metric("CCPA", ccpa_status)
+                                st.metric("Banner Elements Detected", cookie_banner.get('banner_elements', 0))
+                            else:
+                                st.error("❌ No cookie consent banner detected")
+                                st.warning("⚠️ GDPR/CCPA requires user consent before setting non-essential cookies. Consider implementing a cookie consent banner.")
+                        
+                        with tab3:
+                            st.subheader("Third-Party Tracking Scripts")
+                            
+                            total_trackers = tracking.get('total_trackers', 0)
+                            
+                            if total_trackers > 0:
+                                st.warning(f"⚠️ {total_trackers} third-party tracker(s) detected")
                                 
-                                with col3:
-                                    st.metric("Compliance Score", f"{analysis.get('overall_compliance_score', 0)}%")
+                                detected = tracking.get('detected_trackers', {})
                                 
-                                st.markdown("---")
+                                for tracker_name, scripts in detected.items():
+                                    with st.expander(f"**{tracker_name}** ({len(scripts)} script(s))"):
+                                        for script in scripts[:3]:
+                                            st.code(script, language=None)
                                 
-                                col1, col2 = st.columns(2)
+                                st.info("💡 Ensure users are informed about these trackers in your privacy policy and cookie consent banner.")
+                            else:
+                                st.success("✅ No third-party trackers detected")
+                            
+                            st.metric("Total Scripts on Page", tracking.get('total_scripts', 0))
+                        
+                        with tab4:
+                            st.subheader("Privacy Policy Analysis")
+                            
+                            if privacy.get('found'):
+                                st.success(f"✅ {privacy.get('count', 0)} privacy policy link(s) found")
                                 
-                                with col1:
-                                    st.markdown("**✅ Compliance Strengths:**")
-                                    strengths = analysis.get('strengths', [])
-                                    if strengths:
-                                        for strength in strengths:
-                                            st.markdown(f"- {strength}")
-                                    else:
-                                        st.markdown("- None identified")
+                                st.markdown("**Privacy Policy Links:**")
+                                for link in privacy.get('links', []):
+                                    st.markdown(f"- [{link['text']}]({link['url']})")
                                 
-                                with col2:
-                                    st.markdown("**❌ Missing Elements:**")
-                                    missing = analysis.get('missing_elements', [])
-                                    if missing:
-                                        for item in missing:
-                                            st.markdown(f"- {item}")
-                                    else:
-                                        st.markdown("- None")
-                                
-                                st.markdown("---")
-                                st.markdown("**Summary:**")
-                                st.info(analysis.get('summary', 'No summary available'))
-                                
-                                compliance_items = {
-                                    'Data Collection Mentioned': analysis.get('data_collection_mentioned', False),
-                                    'Data Deletion Rights': analysis.get('data_deletion_rights', False),
-                                    'Data Sharing Disclosed': analysis.get('data_sharing_disclosed', False),
-                                    'User Consent Mechanism': analysis.get('user_consent_mechanism', False),
-                                    'Contact Information': analysis.get('contact_information_provided', False),
-                                    'Cookie Usage Explained': analysis.get('cookie_usage_explained', False),
-                                    'Third-Party Disclosure': analysis.get('third_party_disclosure', False)
-                                }
-                                
-                                st.markdown("**Detailed Compliance Checklist:**")
-                                checklist_df = pd.DataFrame([
-                                    {'Item': key, 'Status': '✅ Yes' if value else '❌ No'}
-                                    for key, value in compliance_items.items()
-                                ])
-                                st.dataframe(checklist_df, use_container_width=True, hide_index=True)
-                                
-                            elif results.get('policy_analysis', {}).get('error'):
-                                st.warning(f"⚠️ {results['policy_analysis']['error']}")
-                        else:
-                            st.error("❌ No privacy policy found")
-                            st.warning("⚠️ GDPR/CCPA requires a clear and accessible privacy policy. Add a privacy policy link to your website footer or header.")
-                    
+                                if 'policy_analysis' in results and not results['policy_analysis'].get('error'):
+                                    st.markdown("---")
+                                    st.markdown("### 🤖 AI-Powered Policy Analysis")
+                                    
+                                    analysis = results['policy_analysis']
+                                    
+                                    col1, col2, col3 = st.columns(3)
+                                    
+                                    with col1:
+                                        gdpr_status = "✅ Compliant" if analysis.get('gdpr_compliant') else "❌ Non-Compliant"
+                                        st.metric("GDPR", gdpr_status)
+                                    
+                                    with col2:
+                                        ccpa_status = "✅ Compliant" if analysis.get('ccpa_compliant') else "❌ Non-Compliant"
+                                        st.metric("CCPA", ccpa_status)
+                                    
+                                    with col3:
+                                        st.metric("Compliance Score", f"{analysis.get('overall_compliance_score', 0)}%")
+                                    
+                                    st.markdown("---")
+                                    
+                                    col1, col2 = st.columns(2)
+                                    
+                                    with col1:
+                                        st.markdown("**✅ Compliance Strengths:**")
+                                        strengths = analysis.get('strengths', [])
+                                        if strengths:
+                                            for strength in strengths:
+                                                st.markdown(f"- {strength}")
+                                        else:
+                                            st.markdown("- None identified")
+                                    
+                                    with col2:
+                                        st.markdown("**❌ Missing Elements:**")
+                                        missing = analysis.get('missing_elements', [])
+                                        if missing:
+                                            for item in missing:
+                                                st.markdown(f"- {item}")
+                                        else:
+                                            st.markdown("- None")
+                                    
+                                    st.markdown("---")
+                                    st.markdown("**Summary:**")
+                                    st.info(analysis.get('summary', 'No summary available'))
+                                    
+                                    compliance_items = {
+                                        'Data Collection Mentioned': analysis.get('data_collection_mentioned', False),
+                                        'Data Deletion Rights': analysis.get('data_deletion_rights', False),
+                                        'Data Sharing Disclosed': analysis.get('data_sharing_disclosed', False),
+                                        'User Consent Mechanism': analysis.get('user_consent_mechanism', False),
+                                        'Contact Information': analysis.get('contact_information_provided', False),
+                                        'Cookie Usage Explained': analysis.get('cookie_usage_explained', False),
+                                        'Third-Party Disclosure': analysis.get('third_party_disclosure', False)
+                                    }
+                                    
+                                    st.markdown("**Detailed Compliance Checklist:**")
+                                    checklist_df = pd.DataFrame([
+                                        {'Item': key, 'Status': '✅ Yes' if value else '❌ No'}
+                                        for key, value in compliance_items.items()
+                                    ])
+                                    st.dataframe(checklist_df, use_container_width=True, hide_index=True)
+                                    
+                                elif results.get('policy_analysis', {}).get('error'):
+                                    st.warning(f"⚠️ {results['policy_analysis']['error']}")
+                            else:
+                                st.error("❌ No privacy policy found")
+                                st.warning("⚠️ GDPR/CCPA requires a clear and accessible privacy policy. Add a privacy policy link to your website footer or header.")
+                        
                 except Exception as e:
-                    st.error(f"❌ An error occurred during scanning: {str(e)}")
-                    st.exception(e)
+                        st.error(f"❌ An error occurred during scanning: {str(e)}")
+                        st.exception(e)
 
 with tab_history:
     st.subheader("📊 Scan History & Trends")
