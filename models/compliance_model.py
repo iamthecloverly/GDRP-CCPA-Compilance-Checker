@@ -21,8 +21,36 @@ class ComplianceModel:
             self.html = response.text
             self.soup = BeautifulSoup(self.html, 'lxml')
             return True
+        except requests.exceptions.ConnectionError as e:
+            error_msg = str(e)
+            if 'Failed to resolve' in error_msg or 'Name or service not known' in error_msg:
+                parsed = urlparse(self.url)
+                domain = parsed.netloc or parsed.path.split('/')[0]
+                
+                if not domain.startswith('www.'):
+                    try:
+                        www_url = self.url.replace(f'://{domain}', f'://www.{domain}', 1)
+                        response = requests.get(www_url, headers=headers, timeout=10)
+                        response.raise_for_status()
+                        self.html = response.text
+                        self.soup = BeautifulSoup(self.html, 'lxml')
+                        self.url = www_url
+                        return True
+                    except Exception:
+                        pass
+                
+                self.results['error'] = f"Unable to reach {domain}. The domain may not exist or is not accessible. Try adding 'www.' to the domain."
+            else:
+                self.results['error'] = f"Connection failed: {error_msg}"
+            return False
+        except requests.exceptions.Timeout:
+            self.results['error'] = "Request timed out. The website took too long to respond."
+            return False
+        except requests.exceptions.HTTPError as e:
+            self.results['error'] = f"HTTP Error {e.response.status_code}: The website returned an error."
+            return False
         except Exception as e:
-            self.results['error'] = str(e)
+            self.results['error'] = f"Failed to fetch website: {str(e)}"
             return False
     
     def detect_cookie_banner(self) -> Dict:
