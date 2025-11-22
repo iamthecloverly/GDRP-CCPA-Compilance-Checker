@@ -1,0 +1,15 @@
+# Ignore Git files
+.git/
+.gitignore
+
+# Ignore local development files
+README.md
+.idea/
+.vscode/
+venv/
+.venv/
+
+# Ignore local database files
+*.db
+*.sqlite3
+compliance.db
