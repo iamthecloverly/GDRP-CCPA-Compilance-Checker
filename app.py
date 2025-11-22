@@ -1,9 +1,10 @@
 import streamlit as st
 from controllers.compliance_controller import ComplianceController
-import pandas as pd
+import numpy as np
 from datetime import datetime
 import json
 from io import StringIO
+import csv
 from database.db import init_db
 from database.operations import save_scan_result, get_scan_history, get_score_trend, get_all_scanned_urls
 
@@ -175,7 +176,7 @@ with tab_scan:
                         weights = summary.get('weights', {})
                         
                         st.markdown("### Category Breakdown")
-                        score_df = pd.DataFrame([
+                        score_data = [
                             {
                                 'Category': 'Cookie Consent Banner',
                                 'Score': f"{category_scores.get('cookie_consent', 0)}/100",
@@ -200,8 +201,8 @@ with tab_scan:
                                 'Weight': f"{weights.get('contact_info', 0)*100:.0f}%",
                                 'Weighted Score': f"{category_scores.get('contact_info', 0) * weights.get('contact_info', 0):.1f}"
                             }
-                        ])
-                        st.dataframe(score_df, use_container_width=True, hide_index=True)
+                        ]
+                        st.dataframe(score_data, use_container_width=True, hide_index=True)
                         
                         st.markdown("---")
                         
@@ -236,8 +237,7 @@ with tab_scan:
                                 ]
                             }
                             
-                            df = pd.DataFrame(overview_data)
-                            st.dataframe(df, use_container_width=True, hide_index=True)
+                            st.dataframe(overview_data, use_container_width=True, hide_index=True)
                             
                             if 'recommendations' in results and not results['recommendations'].get('error'):
                                 st.markdown("### 🎯 Recommendations")
@@ -354,11 +354,11 @@ with tab_scan:
                                     }
                                     
                                     st.markdown("**Detailed Compliance Checklist:**")
-                                    checklist_df = pd.DataFrame([
+                                    checklist_data = [
                                         {'Item': key, 'Status': '✅ Yes' if value else '❌ No'}
                                         for key, value in compliance_items.items()
-                                    ])
-                                    st.dataframe(checklist_df, use_container_width=True, hide_index=True)
+                                    ]
+                                    st.dataframe(checklist_data, use_container_width=True, hide_index=True)
                                     
                                 elif results.get('policy_analysis', {}).get('error'):
                                     st.warning(f"⚠️ {results['policy_analysis']['error']}")
@@ -395,31 +395,31 @@ with tab_history:
                 with col1:
                     st.markdown("#### Compliance Score Trend")
                     if trend_data['dates'] and len(trend_data['dates']) > 0:
-                        chart_df = pd.DataFrame({
-                            'Date': pd.to_datetime(trend_data['dates']),
+                        chart_data = {
+                            'Date': [datetime.fromisoformat(d) for d in trend_data['dates']],
                             'Overall Score': trend_data['scores']
-                        })
-                        st.line_chart(chart_df.set_index('Date'))
+                        }
+                        st.line_chart(chart_data, x='Date', y='Overall Score')
                     else:
                         st.info("No trend data available yet. Scan this website multiple times to see trends.")
                 
                 with col2:
                     st.markdown("#### Category Scores Trend")
                     if trend_data['dates'] and len(trend_data['dates']) > 0:
-                        category_chart_df = pd.DataFrame({
-                            'Date': pd.to_datetime(trend_data['dates']),
+                        category_chart_data = {
+                            'Date': [datetime.fromisoformat(d) for d in trend_data['dates']],
                             'Cookie': trend_data['cookie_scores'],
                             'Privacy': trend_data['privacy_scores'],
                             'Trackers': trend_data['tracker_scores']
-                        })
-                        st.line_chart(category_chart_df.set_index('Date'))
+                        }
+                        st.line_chart(category_chart_data, x='Date', y=['Cookie', 'Privacy', 'Trackers'])
                     else:
                         st.info("No trend data available yet. Scan this website multiple times to see trends.")
                 
                 st.markdown("---")
                 st.markdown("#### Scan History Table")
                 
-                history_table = pd.DataFrame([
+                history_data = [
                     {
                         'Date': datetime.fromisoformat(scan['scan_date']).strftime('%Y-%m-%d %H:%M'),
                         'Score': f"{scan['overall_score']:.1f}",
@@ -432,9 +432,9 @@ with tab_history:
                         'CCPA': '✅' if scan['ccpa_compliant'] else ('❌' if scan['ccpa_compliant'] is not None else 'N/A')
                     }
                     for scan in history
-                ])
+                ]
                 
-                st.dataframe(history_table, use_container_width=True, hide_index=True)
+                st.dataframe(history_data, use_container_width=True, hide_index=True)
                 
                 if len(history) >= 2:
                     latest = history[0]
@@ -501,7 +501,7 @@ with tab_batch:
                 st.markdown("---")
                 st.markdown("### Batch Scan Results Comparison")
                 
-                comparison_table = pd.DataFrame([
+                comparison_data = [
                     {
                         'Website': result.get('url', 'N/A'),
                         'Score': f"{result.get('compliance_summary', {}).get('weighted_score', 0):.1f}",
@@ -513,9 +513,9 @@ with tab_batch:
                         'Contact Info': '✅' if result.get('contact_info', {}).get('detected') else '❌'
                     }
                     for result in batch_results
-                ])
+                ]
                 
-                st.dataframe(comparison_table, use_container_width=True, hide_index=True)
+                st.dataframe(comparison_data, use_container_width=True, hide_index=True)
                 
                 avg_score = sum(r.get('compliance_summary', {}).get('weighted_score', 0) for r in batch_results) / len(batch_results)
                 total_trackers = sum(r.get('tracking_scripts', {}).get('total_trackers', 0) for r in batch_results)
@@ -530,7 +530,11 @@ with tab_batch:
                     st.metric("Compliant Sites", f"{compliant_count}/{len(batch_results)}")
                 
                 batch_csv = StringIO()
-                comparison_table.to_csv(batch_csv, index=False)
+                if comparison_data:
+                    writer = csv.DictWriter(batch_csv, fieldnames=comparison_data[0].keys())
+                    writer.writeheader()
+                    writer.writerows(comparison_data)
+                
                 st.download_button(
                     label="📥 Download Batch Results CSV",
                     data=batch_csv.getvalue(),
